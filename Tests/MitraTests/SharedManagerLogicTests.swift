@@ -23,7 +23,7 @@ final class SharedManagerLogicTests: XCTestCase {
         super.setUp()
         sut = SharedManager()
 
-        sut.borrow(foo, bar) { foo, bar in
+        sut.borrow(foo.rw, bar.rw) { foo, bar in
             foo.value = 0
             bar.value = ""
         }
@@ -32,25 +32,25 @@ final class SharedManagerLogicTests: XCTestCase {
     func test_shared_modified() {
         // Given
 
-        sut.borrow(foo, bar) { foo, bar in
+        sut.borrow(foo.ro, bar.ro) { foo, bar in
             XCTAssertEqual(foo.value, 0)
             XCTAssertEqual(bar.value, "")
         }
 
         // When
 
-        sut.borrow(foo, bar) { foo, bar in
+        sut.borrow(foo.rw, bar.rw) { foo, bar in
             foo.value = 1
             bar.value = "foo"
         }
 
         // Then
 
-        sut.borrow(foo) { foo in
+        sut.borrow(foo.ro) { foo in
             XCTAssertEqual(foo.value, 1)
         }
 
-        sut.borrow(bar) { bar in
+        sut.borrow(bar.ro) { bar in
             XCTAssertEqual(bar.value, "foo")
         }
     }
@@ -63,7 +63,7 @@ final class SharedManagerLogicTests: XCTestCase {
         // When
 
         queue.async {
-            self.sut.borrow(self.foo) { foo in
+            self.sut.borrow(self.foo.rw) { foo in
                 barrier.signal()
                 Thread.sleep(until: Date() + 1)
                 foo.value = 1
@@ -75,7 +75,7 @@ final class SharedManagerLogicTests: XCTestCase {
         barrier.wait()
         var tm = MachExecutionTimeMeter()
         tm.measure {
-            sut.borrow(foo) { foo in
+            sut.borrow(foo.ro) { foo in
                 XCTAssertEqual(foo.value, 1)
             }
         }
@@ -88,7 +88,7 @@ final class SharedManagerLogicTests: XCTestCase {
 
         let barrier = DispatchSemaphore(value: 0)
         queue.async {
-            self.sut.borrow(self.foo, self.bar) { foo, bar in
+            self.sut.borrow(self.foo.rw, self.bar.rw) { foo, bar in
                 barrier.signal()
                 Thread.sleep(until: Date() + 1)
                 foo.value = 1
@@ -101,7 +101,7 @@ final class SharedManagerLogicTests: XCTestCase {
         barrier.wait()
         var tm = MachExecutionTimeMeter()
         tm.measure {
-            sut.borrow(bar) { bar in
+            sut.borrow(bar.ro) { bar in
                 // Then
                 XCTAssertEqual(bar.value, "foo")
             }
@@ -117,7 +117,7 @@ final class SharedManagerLogicTests: XCTestCase {
 
         let barrier = DispatchSemaphore(value: 0)
         queue.async {
-            self.sut.borrow(self.foo, self.bar) { foo, bar in
+            self.sut.borrow(self.foo.ro, self.bar.rw) { foo, bar in
                 barrier.signal()
                 Thread.sleep(until: Date() + 1)
                 bar.value = "foo"
@@ -129,7 +129,35 @@ final class SharedManagerLogicTests: XCTestCase {
         barrier.wait()
         var tm = MachExecutionTimeMeter()
         tm.measure {
-            sut.borrow(foo, bar) { foo, bar in
+            sut.borrow(bar.ro) { bar in
+                // Then
+                XCTAssertEqual(bar.value, "foo")
+            }
+        }
+
+        // Then
+
+        XCTAssertGreaterThanOrEqual(tm.executionTime, 1 - 0.1)
+    }
+
+    func test_2props_that_thread_borrows_and_this_thread_waits3() {
+        // Given
+
+        let barrier = DispatchSemaphore(value: 0)
+        queue.async {
+            self.sut.borrow(self.foo.ro, self.bar.rw) { foo, bar in
+                barrier.signal()
+                Thread.sleep(until: Date() + 1)
+                bar.value = "foo"
+            }
+        }
+
+        // When
+
+        barrier.wait()
+        var tm = MachExecutionTimeMeter()
+        tm.measure {
+            sut.borrow(foo.ro, bar.ro) { foo, bar in
                 // Then
                 XCTAssertEqual(foo.value, 0)
                 XCTAssertEqual(bar.value, "foo")
@@ -138,6 +166,34 @@ final class SharedManagerLogicTests: XCTestCase {
 
         // Then
         XCTAssertGreaterThanOrEqual(tm.executionTime, 1 - 0.1)
+    }
+
+    func test_2props_that_thread_borrows_and_this_thread_doesnt_wait() {
+        // Given
+
+        let barrier = DispatchSemaphore(value: 0)
+        queue.async {
+            self.sut.borrow(self.foo.ro, self.bar.rw) { foo, bar in
+                barrier.signal()
+                Thread.sleep(until: Date() + 1)
+                bar.value = "foo"
+            }
+        }
+
+        // When
+
+        barrier.wait()
+        var tm = MachExecutionTimeMeter()
+        tm.measure {
+            sut.borrow(foo.ro) { bar in
+                // Then
+                XCTAssertEqual(bar.value, 0)
+            }
+        }
+
+        // Then
+
+        XCTAssertLessThan(tm.executionTime, 1)
     }
 
     func test_1prop_2those_threads_wait_while_this_thread_borrows() {
@@ -150,7 +206,7 @@ final class SharedManagerLogicTests: XCTestCase {
         var tm1 = MachExecutionTimeMeter()
         var tm2 = MachExecutionTimeMeter()
 
-        sut.borrow(foo) { foo in
+        sut.borrow(foo.ro) { foo in
             XCTAssertEqual(foo.value, 0)
         }
 
@@ -158,13 +214,13 @@ final class SharedManagerLogicTests: XCTestCase {
 
         group.enter()
         queue.async {
-            self.sut.borrow(self.foo) { foo in
+            self.sut.borrow(self.foo.ro) { foo in
                 XCTAssertEqual(foo.value, 0)
             }
             barrier1.signal()
             barrier2.wait()
             tm1.measure {
-                self.sut.borrow(self.foo) { foo in
+                self.sut.borrow(self.foo.ro) { foo in
                     // Then
                     XCTAssertEqual(foo.value, 123)
                 }
@@ -174,7 +230,7 @@ final class SharedManagerLogicTests: XCTestCase {
 
         group.enter()
         queue.async {
-            self.sut.borrow(self.foo) { foo in
+            self.sut.borrow(self.foo.ro) { foo in
                 // Then
                 XCTAssertEqual(foo.value, 0)
             }
@@ -182,7 +238,7 @@ final class SharedManagerLogicTests: XCTestCase {
             barrier2.wait()
             tm2.measure {
                 // Then
-                self.sut.borrow(self.foo) { foo in
+                self.sut.borrow(self.foo.ro) { foo in
                     XCTAssertEqual(foo.value, 123)
                 }
             }
@@ -192,7 +248,7 @@ final class SharedManagerLogicTests: XCTestCase {
         barrier1.wait()
         barrier1.wait()
 
-        sut.borrow(foo) { foo in
+        sut.borrow(foo.rw) { foo in
             barrier2.signal()
             barrier2.signal()
             Thread.sleep(until: Date() + 1)

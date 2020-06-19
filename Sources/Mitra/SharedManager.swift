@@ -6,12 +6,22 @@
 //  Copyright © 2020 iRiZen.com. All rights reserved.
 //
 
-import Foundation
+import Mutexes
 
 public final class SharedManager {
+    // MARK: - State
+
     private var registry = Registry()
-    private let mutex = NSLock()
-    internal func internalBorrow<R>(_ props: [AnyObject], accessBlock: () -> R) -> R {
+    private let mutex = PthreadMutex()
+
+    // MARK: - Initialization
+
+    public init() {}
+
+    // MARK: - UI
+
+    @usableFromInline @discardableResult
+    func internalBorrow<R>(_ props: ContiguousArray<Borrowable>, accessBlock: () -> R) -> R {
         let active = activateBorrowingFor(props)
         defer {
             deactivateBorrowing(active)
@@ -19,15 +29,20 @@ public final class SharedManager {
         }
         return accessBlock()
     }
-    private func activateBorrowingFor(_ props: [AnyObject]) -> Borrowing {
+
+    // MARK: - Helpers
+
+    @inline(__always)
+    private func activateBorrowingFor(_ props: ContiguousArray<Borrowable>) -> Borrowing {
         while true {
             mutex.lock()
             let preservedRegistry = registry
             mutex.unlock()
 
-            let new = Borrowing(props)
-            if let blockingBorrowing = preservedRegistry.searchForConflictingBorrowingWith(new) {
+            let newBorrowing = Borrowing(props)
+            if let blockingBorrowing = preservedRegistry.searchForConflictingBorrowingWith(newBorrowing) {
                 blockingBorrowing.wait()
+                continue // a new borrow state has been activated, so start over
             }
 
             mutex.lock()
@@ -35,14 +50,15 @@ public final class SharedManager {
             if registry !== preservedRegistry {
                 continue
             }
-            registry = registry.copyWithAdded(new)
-            return new // bail out
+            registry = registry.copyWithAdded(newBorrowing)
+            return newBorrowing // bail out
         }
     }
+
+    @inline(__always)
     private func deactivateBorrowing(_ borrowing: Borrowing) {
         mutex.lock()
         defer { mutex.unlock() }
         registry = registry.copyWithRemoved(borrowing)
     }
-    public init() {}
 }

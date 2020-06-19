@@ -22,7 +22,7 @@ struct TrafficAccountMock {
     // MARK: - Queries
 
     var currentBalance: Double {
-        sharedManager.borrow(balance) { balance in
+        sharedManager.borrow(balance.ro) { balance in
             raceDetector.nonExclusiveCriticalSection({
                 return balance.value
             }, register: { $0(0) })
@@ -30,7 +30,7 @@ struct TrafficAccountMock {
     }
 
     var currentTraffic: Double {
-        sharedManager.borrow(traffic) { traffic in
+        sharedManager.borrow(traffic.ro) { traffic in
             raceDetector.nonExclusiveCriticalSection({
                 return traffic.value
             }, register: { $0(1) })
@@ -38,7 +38,7 @@ struct TrafficAccountMock {
     }
 
     func summary() -> (balance: Double, traffic: Double) {
-        sharedManager.borrow(balance, traffic) { balance, traffic in
+        sharedManager.borrow(balance.ro, traffic.ro) { balance, traffic in
             raceDetector.nonExclusiveCriticalSection({
                 return (balance: balance.value, traffic: traffic.value)
             }, register: { register in [0, 1].forEach { register($0) } })
@@ -48,7 +48,7 @@ struct TrafficAccountMock {
     // MARK: - Commands
 
     func topUp(for amount: Double) {
-        sharedManager.borrow(balance) { balance in
+        sharedManager.borrow(balance.rw) { balance in
             raceDetector.exclusiveCriticalSection({
                 balance.value += amount
             }, register: { $0(0) })
@@ -56,7 +56,7 @@ struct TrafficAccountMock {
     }
 
     func consume(_ gb: Double, at costPerGb: Double) -> Double {
-        sharedManager.borrow(balance, traffic) { balance, traffic in
+        sharedManager.borrow(balance.rw, traffic.rw) { balance, traffic in
             raceDetector.exclusiveCriticalSection({
                 let cost = gb * costPerGb
                 let spent = balance.value < cost ? balance.value : cost

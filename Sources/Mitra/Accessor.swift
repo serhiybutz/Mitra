@@ -6,13 +6,16 @@
 //  Copyright © 2020 iRiZen.com. All rights reserved.
 //
 
-public struct Accessor<T> {
-    private let prop: Property<T>
-    internal init(_ p: Property<T>) {
-        self.prop = p
-    }
-    public var value: T {
-        get { prop.value }
-        set { prop.value = newValue }
+public struct Accessor<P: Accessed, S: AccessSemantics> {
+    // MARK: - State
+
+    @usableFromInline
+    var property: P
+
+    // MARK: - Initialization
+
+    @usableFromInline @inline(__always)
+    init(_ property: P) {
+        self.property = property
     }
 }

@@ -1,5 +1,5 @@
 //
-//  SharedManagerPropertyTests.swift
+//  PropertyTests.swift
 //  Mitra
 //
 //  Created by Serge Bouts on 5/12/20.
@@ -10,7 +10,7 @@ import XCTest
 @testable
 import Mitra
 
-final class SharedManagerPropertyTests: XCTestCase {
+final class PropertyTests: XCTestCase {
     let sut = SharedManager()
 
     func test_int() {
@@ -20,14 +20,14 @@ final class SharedManagerPropertyTests: XCTestCase {
 
         // When
 
-        sut.borrow(foo) { foo in
+        sut.borrow(foo.rw) { foo in
             XCTAssertEqual(foo.value, 0)
             foo.value = 1
         }
 
         // Then
 
-        sut.borrow(foo) { foo in
+        sut.borrow(foo.ro) { foo in
             XCTAssertEqual(foo.value, 1)
         }
     }
@@ -39,14 +39,14 @@ final class SharedManagerPropertyTests: XCTestCase {
 
         // When
 
-        sut.borrow(foo) { foo in
+        sut.borrow(foo.rw) { foo in
             XCTAssertEqual(foo.value, "")
             foo.value = "foo"
         }
 
         // Then
 
-        sut.borrow(foo) { foo in
+        sut.borrow(foo.ro) { foo in
             XCTAssertEqual(foo.value, "foo")
         }
     }
@@ -58,14 +58,14 @@ final class SharedManagerPropertyTests: XCTestCase {
 
         // When
 
-        sut.borrow(foo) { foo in
+        sut.borrow(foo.rw) { foo in
             XCTAssertNil(foo.value)
             foo.value = 1
         }
 
         // Then
 
-        sut.borrow(foo) { foo in
+        sut.borrow(foo.ro) { foo in
             XCTAssertEqual(foo.value, 1)
         }
     }
@@ -77,7 +77,7 @@ final class SharedManagerPropertyTests: XCTestCase {
 
         // When
 
-        sut.borrow(foo) { foo in
+        sut.borrow(foo.rw) { foo in
             XCTAssertEqual(foo.value, [])
             foo.value = [1, 2]
             foo.value.append(3)
@@ -85,7 +85,7 @@ final class SharedManagerPropertyTests: XCTestCase {
 
         // Then
 
-        sut.borrow(foo) { foo in
+        sut.borrow(foo.ro) { foo in
             XCTAssertEqual(foo.value, [1, 2, 3])
         }
     }
@@ -97,7 +97,7 @@ final class SharedManagerPropertyTests: XCTestCase {
 
         // When
 
-        sut.borrow(foo) { foo in
+        sut.borrow(foo.rw) { foo in
             XCTAssertEqual(foo.value, [:])
             foo.value = ["foo": 2]
             foo.value["bar"] = 3
@@ -105,7 +105,7 @@ final class SharedManagerPropertyTests: XCTestCase {
 
         // Then
 
-        sut.borrow(foo) { foo in
+        sut.borrow(foo.ro) { foo in
             XCTAssertEqual(foo.value, ["foo": 2, "bar": 3])
         }
     }
@@ -117,7 +117,7 @@ final class SharedManagerPropertyTests: XCTestCase {
 
         // When
 
-        sut.borrow(foo) { foo in
+        sut.borrow(foo.rw) { foo in
             XCTAssertEqual(foo.value, [])
             foo.value = ["foo"]
             foo.value.insert("bar")
@@ -125,7 +125,7 @@ final class SharedManagerPropertyTests: XCTestCase {
 
         // Then
 
-        sut.borrow(foo) { foo in
+        sut.borrow(foo.ro) { foo in
             XCTAssertEqual(foo.value, ["foo", "bar"])
         }
     }

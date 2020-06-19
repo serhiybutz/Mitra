@@ -7,74 +7,116 @@
 //
 
 extension SharedManager {
-    public func borrow<A, R>(_ a: Property<A>,
-                             accessBlock: (inout Accessor<A>) -> R) -> R
-    {
-        var _a = Accessor(a)
-        return internalBorrow([a]) {
-            accessBlock(&_a)
+    @inlinable @discardableResult
+    public func borrow<A, AA: AccessSemantics, R>(_ a: AccessSemantized<A, AA>,
+                                                  accessBlock: (inout Accessor<A, AA>) -> R) -> R {
+        internalBorrow([a]) {
+            var _a = Accessor<A, AA>(a.p)
+            return accessBlock(&_a)
         }
     }
-    public func borrow<A, B, R>(_ a: Property<A>,
-                                _ b: Property<B>,
-                                accessBlock: (inout Accessor<A>,
-                                              inout Accessor<B>) -> R) -> R
+
+    @inlinable @discardableResult
+    public func borrow<A, AA: AccessSemantics,
+        B, BB: AccessSemantics, R>(_ a: AccessSemantized<A, AA>,
+                                   _ b: AccessSemantized<B, BB>,
+                                   accessBlock: (inout Accessor<A, AA>,
+        inout Accessor<B, BB>) -> R) -> R
     {
-        var _a = Accessor(a)
-        var _b = Accessor(b)
-        return internalBorrow([a, b]) {
-            accessBlock(&_a, &_b)
+        internalBorrow([a,
+                        b])
+        {
+            var _a = Accessor<A, AA>(a.p)
+            var _b = Accessor<B, BB>(b.p)
+            return accessBlock(&_a,
+                               &_b)
         }
     }
-    public func borrow<A, B, C, R>(_ a: Property<A>,
-                                   _ b: Property<B>,
-                                   _ c: Property<C>,
-                                   accessBlock: (inout Accessor<A>,
-                                                 inout Accessor<B>,
-                                                 inout Accessor<C>) -> R) -> R
+
+    @inlinable @discardableResult
+    public func borrow<A, AA: AccessSemantics,
+        B, BB: AccessSemantics,
+        C, CC: AccessSemantics, R>(_ a: AccessSemantized<A, AA>,
+                                   _ b: AccessSemantized<B, BB>,
+                                   _ c: AccessSemantized<C, CC>,
+                                   accessBlock: (inout Accessor<A, AA>,
+        inout Accessor<B, BB>,
+        inout Accessor<C, CC>) -> R) -> R
     {
-        var _a = Accessor(a)
-        var _b = Accessor(b)
-        var _c = Accessor(c)
-        return internalBorrow([a, b, c]) {
-            accessBlock(&_a, &_b, &_c)
+        internalBorrow([a,
+                        b,
+                        c])
+        {
+            var _a = Accessor<A, AA>(a.p)
+            var _b = Accessor<B, BB>(b.p)
+            var _c = Accessor<C, CC>(c.p)
+            return accessBlock(&_a,
+                               &_b,
+                               &_c)
         }
     }
-    public func borrow<A, B, C, D, R>(_ a: Property<A>,
-                                      _ b: Property<B>,
-                                      _ c: Property<C>,
-                                      _ d: Property<D>,
-                                      accessBlock: (inout Accessor<A>,
-                                                    inout Accessor<B>,
-                                                    inout Accessor<C>,
-                                                    inout Accessor<D>) -> R) -> R
+
+    @inlinable @discardableResult
+    public func borrow<A, AA: AccessSemantics,
+        B, BB: AccessSemantics,
+        C, CC: AccessSemantics,
+        D, DD: AccessSemantics, R>(_ a: AccessSemantized<A, AA>,
+                                   _ b: AccessSemantized<B, BB>,
+                                   _ c: AccessSemantized<C, CC>,
+                                   _ d: AccessSemantized<D, DD>,
+                                   accessBlock: (inout Accessor<A, AA>,
+        inout Accessor<B, BB>,
+        inout Accessor<C, CC>,
+        inout Accessor<D, DD>) -> R) -> R
     {
-        var _a = Accessor(a)
-        var _b = Accessor(b)
-        var _c = Accessor(c)
-        var _d = Accessor(d)
-        return internalBorrow([a, b, c, d]) {
-            accessBlock(&_a, &_b, &_c, &_d)
+        internalBorrow([a,
+                        b,
+                        c,
+                        d])
+        {
+            var _a = Accessor<A, AA>(a.p)
+            var _b = Accessor<B, BB>(b.p)
+            var _c = Accessor<C, CC>(c.p)
+            var _d = Accessor<D, DD>(d.p)
+            return accessBlock(&_a,
+                               &_b,
+                               &_c,
+                               &_d)
         }
     }
-    public func borrow<A, B, C, D, E, R>(_ a: Property<A>,
-                                         _ b: Property<B>,
-                                         _ c: Property<C>,
-                                         _ d: Property<D>,
-                                         _ e: Property<E>,
-                                         accessBlock: (inout Accessor<A>,
-                                                       inout Accessor<B>,
-                                                       inout Accessor<C>,
-                                                       inout Accessor<D>,
-                                                       inout Accessor<E>) -> R) -> R
+
+    @inlinable @discardableResult
+    public func borrow<A, AA: AccessSemantics,
+        B, BB: AccessSemantics,
+        C, CC: AccessSemantics,
+        D, DD: AccessSemantics,
+        E, EE: AccessSemantics, R>(_ a: AccessSemantized<A, AA>,
+                                   _ b: AccessSemantized<B, BB>,
+                                   _ c: AccessSemantized<C, CC>,
+                                   _ d: AccessSemantized<D, DD>,
+                                   _ e: AccessSemantized<E, EE>,
+                                   accessBlock: (inout Accessor<A, AA>,
+        inout Accessor<B, BB>,
+        inout Accessor<C, CC>,
+        inout Accessor<D, DD>,
+        inout Accessor<E, EE>) -> R) -> R
     {
-        var _a = Accessor(a)
-        var _b = Accessor(b)
-        var _c = Accessor(c)
-        var _d = Accessor(d)
-        var _e = Accessor(e)
-        return internalBorrow([a, b, c, d, e]) {
-            accessBlock(&_a, &_b, &_c, &_d, &_e)
+        internalBorrow([a,
+                        b,
+                        c,
+                        d,
+                        e])
+        {
+            var _a = Accessor<A, AA>(a.p)
+            var _b = Accessor<B, BB>(b.p)
+            var _c = Accessor<C, CC>(c.p)
+            var _d = Accessor<D, DD>(d.p)
+            var _e = Accessor<E, EE>(e.p)
+            return accessBlock(&_a,
+                               &_b,
+                               &_c,
+                               &_d,
+                               &_e)
         }
     }
 }

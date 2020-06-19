@@ -6,32 +6,57 @@
 //  Copyright © 2020 iRiZen.com. All rights reserved.
 //
 
-import Foundation
+import Mutexes
 
 final class Borrowing {
-    private let props: [AnyObject]
-    private let revokeCond = NSCondition()
+    // MARK: - State
+
+    private let props: ContiguousArray<Borrowable>
+    private let hasRW: Bool
+    private let revokeMutex = PthreadMutex()
+    private let revokeCond = PthreadCondition()
     private var isRevoked = false
-    init(_ props: [AnyObject]) {
+
+    // MARK: - Initialization
+
+    @inline(__always)
+    init(_ props: ContiguousArray<Borrowable>) {
         self.props = props
+        self.hasRW = props.hasRWAccessSemantics
     }
+
+    deinit {
+        revoke()
+    }
+
+    // MARK: - UI
+
+    @inline(__always)
     func wait() {
-        revokeCond.lock()
-        defer { revokeCond.unlock() }
-        while !isRevoked {
-            revokeCond.wait()
+        revokeMutex.withLocked {
+            while !isRevoked {
+                revokeCond.wait(with: revokeMutex)
+            }
         }
     }
+
+    @inline(__always)
     func revoke() {
-        revokeCond.lock()
-        defer { revokeCond.unlock() }
-        if !isRevoked {
-            isRevoked = true
-            revokeCond.broadcast()
+        revokeMutex.withLocked {
+            if !isRevoked {
+                isRevoked = true
+                revokeCond.broadcast()
+            }
         }
     }
+
+    @inline(__always)
     func hasConfictWith(_ another: Borrowing) -> Bool {
-        return props.contains { a in another.props.contains { b in a === b } }
+        if !hasRW && !another.hasRW { return false } // minor optimization
+        return props.withRWAccessSemantics
+            .contains { a in another.props.contains { b in a.property.overlaps(with: b.property) } }
+            ||
+            another.props.withRWAccessSemantics
+            .contains { a in props.contains { b in a.property.overlaps(with: b.property) } }
     }
 }
-
