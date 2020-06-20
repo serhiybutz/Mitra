@@ -30,6 +30,16 @@ public final class SharedManager {
         return accessBlock()
     }
 
+    @usableFromInline @discardableResult
+    func internalBorrow<R>(_ props: ContiguousArray<Borrowable>, accessBlock: () throws -> R) throws -> R {
+        let active = activateBorrowingFor(props)
+        defer {
+            deactivateBorrowing(active)
+            active.revoke()
+        }
+        return try accessBlock()
+    }
+
     // MARK: - Helpers
 
     @inline(__always)
