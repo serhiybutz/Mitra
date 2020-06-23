@@ -11,13 +11,13 @@ import XConcurrencyKit
 
 // Mock of the traffic consumer account
 struct TrafficAccountMock {
+    let sharedManager = SharedManager()
+    let raceDetector = RaceSensitiveSection()
+
     // MARK: - State
 
     private let balance = Property<Double>(value: 0) // remaining money
     private let traffic = Property<Double>(value: 0) // traffic consumed
-    private let sharedManager = SharedManager()
-
-    let raceDetector = RaceSensitiveSection()
 
     // MARK: - Queries
 

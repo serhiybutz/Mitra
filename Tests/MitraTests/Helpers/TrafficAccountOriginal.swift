@@ -6,18 +6,21 @@
 //  Copyright © 2020 iRiZen.com. All rights reserved.
 //
 
-/// Traffic consumer account.
+/// A fictional traffic consumer account
 final class TrafficAccountOriginal {
     // MARK: - Properties (State)
+
     private var balance: Double = 0 // remaining money
     private var traffic: Double = 0 // traffic consumed
 
     // MARK: - Queries
+
     public var currentBalance: Double { balance }
     public var currentTraffic: Double { traffic }
     public var summary: (balance: Double, traffic: Double) { (balance: balance, traffic: traffic) }
 
     // MARK: - Commands
+
     public func topUp(for amount: Double) {
         balance += amount
     }

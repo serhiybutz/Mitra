@@ -8,15 +8,17 @@
 
 import Mitra
 
-/// Traffic consumer account.
+/// A fictional traffic consumer account (an example of Mitra's shared memory manager usage)
 struct TrafficAccount {
+    let sharedManager = SharedManager()
+
     // MARK: - Properties (State)
+
     private let balance = Property<Double>(value: 0) // remaining money
     private let traffic = Property<Double>(value: 0) // traffic consumed
 
-    private let sharedManager = SharedManager()
-
     // MARK: - Queries
+
     public var currentBalance: Double {
         sharedManager.borrow(balance.ro) { $0.value }
     }
@@ -28,6 +30,7 @@ struct TrafficAccount {
     }
 
     // MARK: - Commands
+
     public func topUp(for amount: Double) {
         sharedManager.borrow(balance.rw) { $0.value += amount }
     }
