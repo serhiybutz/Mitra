@@ -6,7 +6,9 @@
 //  Copyright © 2020 iRiZen.com. All rights reserved.
 //
 
-final class Registry {
+import Atomics
+
+final class Registry: AtomicReference {
     // MARK: - State
 
     private var borrowings: ContiguousArray<Borrowing> = []
@@ -15,6 +17,7 @@ final class Registry {
 
     @inline(__always)
     func copyWithAdded(_ borrowing: Borrowing) -> Registry {
+        assert(!borrowings.contains(where: { $0.tid == borrowing.tid }))
         let new = Registry()
         new.borrowings = borrowings + [borrowing]
         return new
@@ -22,6 +25,7 @@ final class Registry {
 
     @inline(__always)
     func copyWithRemoved(_ borrowing: Borrowing) -> Registry {
+        assert(borrowings.contains(where: { $0.tid == borrowing.tid }))
         let new = Registry()
         new.borrowings = borrowings.filter { $0 !== borrowing }
         return new

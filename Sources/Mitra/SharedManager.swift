@@ -6,13 +6,13 @@
 //  Copyright © 2020 iRiZen.com. All rights reserved.
 //
 
-import Mutexes
+import Atomics
+import Darwin
 
 public final class SharedManager {
     // MARK: - State
 
-    private var registry = Registry()
-    private let mutex = PthreadMutex()
+    private var sharedRegistry = ManagedAtomic(Registry()) // for inter-thread use (requires synchronization)
 
     // MARK: - Initialization
 
@@ -22,7 +22,8 @@ public final class SharedManager {
 
     @usableFromInline @discardableResult
     func internalBorrow<R>(_ props: ContiguousArray<Borrowable>, accessBlock: () -> R) -> R {
-        let active = activateBorrowingFor(props)
+        let tid = getThreadId()
+        let active = activateBorrowingFor(props, tid)
         defer {
             deactivateBorrowing(active)
             active.revoke()
@@ -32,7 +33,8 @@ public final class SharedManager {
 
     @usableFromInline @discardableResult
     func internalBorrow<R>(_ props: ContiguousArray<Borrowable>, accessBlock: () throws -> R) throws -> R {
-        let active = activateBorrowingFor(props)
+        let tid = getThreadId()
+        let active = activateBorrowingFor(props, tid)
         defer {
             deactivateBorrowing(active)
             active.revoke()
@@ -43,32 +45,43 @@ public final class SharedManager {
     // MARK: - Helpers
 
     @inline(__always)
-    private func activateBorrowingFor(_ props: ContiguousArray<Borrowable>) -> Borrowing {
+    private func activateBorrowingFor(_ props: ContiguousArray<Borrowable>, _ tid: UInt64) -> Borrowing {
         while true {
-            mutex.lock()
-            let preservedRegistry = registry
-            mutex.unlock()
+            let registry = sharedRegistry.load(ordering: .acquiring)
 
-            let newBorrowing = Borrowing(props)
-            if let blockingBorrowing = preservedRegistry.searchForConflictingBorrowingWith(newBorrowing) {
+            let newBorrowing = Borrowing(props, tid)
+
+            if let blockingBorrowing = registry.searchForConflictingBorrowingWith(newBorrowing) {
                 blockingBorrowing.wait()
-                continue // a new borrow state has been activated, so start over
-            }
-
-            mutex.lock()
-            defer { mutex.unlock() }
-            if registry !== preservedRegistry {
                 continue
             }
-            registry = registry.copyWithAdded(newBorrowing)
-            return newBorrowing // bail out
+
+            let newRegistry = registry.copyWithAdded(newBorrowing)
+
+            if sharedRegistry.compareExchange(expected: registry, desired: newRegistry, successOrdering: .releasing, failureOrdering: .relaxed).exchanged {
+                return newBorrowing // bail out
+            }
         }
     }
 
     @inline(__always)
     private func deactivateBorrowing(_ borrowing: Borrowing) {
-        mutex.lock()
-        defer { mutex.unlock() }
-        registry = registry.copyWithRemoved(borrowing)
+        while true {
+            let registry = sharedRegistry.load(ordering: .acquiring)
+
+            let newRegistry = registry.copyWithRemoved(borrowing)
+
+            if sharedRegistry.compareExchange(expected: registry, desired: newRegistry, successOrdering: .releasing, failureOrdering: .relaxed).exchanged {
+                return // bail out
+            }
+        }
+    }
+
+    // takes about 5-7ns
+    @inline(__always)
+    private func getThreadId() -> UInt64 {
+        var tid: UInt64 = 0
+        pthread_threadid_np(nil, &tid)
+        return tid
     }
 }

@@ -11,7 +11,9 @@ import Mutexes
 final class Borrowing {
     // MARK: - State
 
+    // TODO: Condider using Set<Borrowable>
     private let props: ContiguousArray<Borrowable>
+    let tid: UInt64
     private let hasRW: Bool
     private let revokeMutex = PthreadMutex()
     private let revokeCond = PthreadCondition()
@@ -20,8 +22,9 @@ final class Borrowing {
     // MARK: - Initialization
 
     @inline(__always)
-    init(_ props: ContiguousArray<Borrowable>) {
+    init(_ props: ContiguousArray<Borrowable>, _ tid: UInt64) {
         self.props = props
+        self.tid = tid
         self.hasRW = props.hasRWAccessSemantics
     }
 

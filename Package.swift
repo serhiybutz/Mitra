@@ -14,11 +14,12 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/SergeBouts/XConcurrencyKit.git", from: "0.1.0"),
         .package(url: "https://github.com/SergeBouts/Mutexes.git", from: "0.1.0"),
+        .package(url: "https://github.com/apple/swift-atomics", from: "0.0.2"),
     ],
     targets: [
         .target(
             name: "Mitra",
-            dependencies: ["Mutexes"]),
+            dependencies: ["Mutexes", .product(name: "Atomics", package: "swift-atomics")]),
         .testTarget(
             name: "MitraTests",
             dependencies: ["Mitra", "XConcurrencyKit"]),
