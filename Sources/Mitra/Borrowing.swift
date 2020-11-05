@@ -6,17 +6,24 @@
 //  Copyright © 2020 iRiZen.com. All rights reserved.
 //
 
+import Atomics
 import Mutexes
 
 final class Borrowing {
+    final class RevokeCondition: AtomicReference {
+        let mutex = PthreadMutex()
+        let cond = PthreadCondition()
+    }
+
     // MARK: - State
 
     // TODO: Condider using Set<Borrowable>
     private let props: ContiguousArray<Borrowable>
-    let tid: UInt64
     private let hasRW: Bool
-    private let revokeMutex = PthreadMutex()
-    private let revokeCond = PthreadCondition()
+
+    let tid: UInt64
+
+    private var atomicRevokeCondition = ManagedAtomic<RevokeCondition?>(nil)
     private var isRevoked = false
 
     // MARK: - Initialization
@@ -24,8 +31,8 @@ final class Borrowing {
     @inline(__always)
     init(_ props: ContiguousArray<Borrowable>, _ tid: UInt64) {
         self.props = props
-        self.tid = tid
         self.hasRW = props.hasRWAccessSemantics
+        self.tid = tid
     }
 
     deinit {
@@ -35,21 +42,28 @@ final class Borrowing {
     // MARK: - UI
 
     @inline(__always)
-    func wait() {
-        revokeMutex.withLocked {
+    func await() {
+        var revokeCondition: RevokeCondition? = atomicRevokeCondition.load(ordering: .acquiring)
+        if revokeCondition == nil {
+            revokeCondition = RevokeCondition()
+            let result = atomicRevokeCondition.compareExchange(expected: nil, desired: revokeCondition, successOrdering: .releasing, failureOrdering: .acquiring)
+            if !result.exchanged {
+                revokeCondition = result.original
+            }
+        }
+        revokeCondition!.mutex.withLocked {
             while !isRevoked {
-                revokeCond.wait(with: revokeMutex)
+                revokeCondition!.cond.wait(with: revokeCondition!.mutex)
             }
         }
     }
 
     @inline(__always)
     func revoke() {
-        revokeMutex.withLocked {
-            if !isRevoked {
-                isRevoked = true
-                revokeCond.broadcast()
-            }
+        isRevoked = true
+        guard let revokeCondition = atomicRevokeCondition.load(ordering: .acquiring) else { return }
+        revokeCondition.mutex.withLocked {
+            revokeCondition.cond.broadcast()
         }
     }
 

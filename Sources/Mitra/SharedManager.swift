@@ -52,7 +52,7 @@ public final class SharedManager {
             let newBorrowing = Borrowing(props, tid)
 
             if let blockingBorrowing = registry.searchForConflictingBorrowingWith(newBorrowing) {
-                blockingBorrowing.wait()
+                blockingBorrowing.await()
                 continue
             }
 
