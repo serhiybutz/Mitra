@@ -17,7 +17,6 @@ final class Registry: AtomicReference {
 
     @inline(__always)
     func copyWithAdded(_ borrowing: Borrowing) -> Registry {
-        assert(!borrowings.contains(where: { $0.tid == borrowing.tid }))
         let new = Registry()
         new.borrowings = borrowings + [borrowing]
         return new
@@ -25,7 +24,6 @@ final class Registry: AtomicReference {
 
     @inline(__always)
     func copyWithRemoved(_ borrowing: Borrowing) -> Registry {
-        assert(borrowings.contains(where: { $0.tid == borrowing.tid }))
         let new = Registry()
         new.borrowings = borrowings.filter { $0 !== borrowing }
         return new

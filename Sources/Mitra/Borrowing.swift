@@ -70,6 +70,7 @@ final class Borrowing {
     @inline(__always)
     func hasConfictWith(_ another: Borrowing) -> Bool {
         if !hasRW && !another.hasRW { return false } // minor optimization
+        if tid == another.tid { return false } // don't block nested borrowings
         return props.withRWAccessSemantics
             .contains { a in another.props.contains { b in a.property.overlaps(with: b.property) } }
             ||

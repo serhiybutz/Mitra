@@ -1,5 +1,5 @@
 //
-//  PropertyTests.swift
+//  BasicTests.swift
 //  Mitra
 //
 //  Created by Serge Bouts on 5/12/20.
@@ -10,7 +10,7 @@ import XCTest
 @testable
 import Mitra
 
-final class PropertyTests: XCTestCase {
+final class BasicTests: XCTestCase {
     let sut = SharedManager()
 
     func test_int() {
@@ -127,6 +127,28 @@ final class PropertyTests: XCTestCase {
 
         sut.borrow(foo.ro) { foo in
             XCTAssertEqual(foo.value, ["foo", "bar"])
+        }
+    }
+
+    func test_nested() {
+        // Given
+
+        let foo = Property(value: 0)
+
+        // When
+
+        sut.borrow(foo.ro) {
+            XCTAssertEqual($0.value, 0)
+
+            // When
+
+            sut.borrow(foo.rw) {
+                $0.value = 1
+            }
+
+            // Then
+
+            XCTAssertEqual($0.value, 1)
         }
     }
 }
