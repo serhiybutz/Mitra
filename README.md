@@ -3,16 +3,16 @@
 </p>
 
 
-<h1><a href="https://github.com/SergeBouts/Mitra">Mitra</a></h1>
+<h1><a href="https://github.com/SerhiyButz/Mitra">Mitra</a></h1>
 
-The *Mitra* package provides a *shared-memory* synchronization manager (*Shared Manager*) that implements a [*mutex-to-operation* strategy](https://sergebouts.github.io/swift-shared-memory-manager/#mutex-to-operation-strategy) (as opposed to the traditional [*mutex-to-memory* strategy](https://sergebouts.github.io/swift-shared-memory-manager/#mutex-to-memory-strategy)). It can be thought of as an efficient automatically provided *safety net* for *shared-memory* operations, and is a breeze to work with.
+The *Mitra* package provides a *shared-memory* synchronization manager (*Shared Manager*) that implements a [*mutex-to-operation* strategy](https://SerhiyButz.github.io/swift-shared-memory-manager/#mutex-to-operation-strategy) (as opposed to the traditional [*mutex-to-memory* strategy](https://SerhiyButz.github.io/swift-shared-memory-manager/#mutex-to-memory-strategy)). It can be thought of as an efficient automatically provided *safety net* for *shared-memory* operations, and is a breeze to work with.
 
 
 <p>
     <img src="https://img.shields.io/badge/Swift-5.1-orange" alt="Swift" />
     <img src="https://img.shields.io/badge/platform-macOS%20|%20iOS-orange.svg" alt="Platform" />
     <img src="https://img.shields.io/badge/Swift%20Package%20Manager-compatible-orange" alt="SPM" />
-    <a href="https://github.com/SergeBouts/Mitra/blob/master/LICENSE">
+    <a href="https://github.com/SerhiyButz/Mitra/blob/master/LICENSE">
         <img src="https://img.shields.io/badge/licence-MIT-orange" alt="License" />
     </a>
 </p>
@@ -30,16 +30,20 @@ The *Mitra* package provides a *shared-memory* synchronization manager (*Shared 
 - [License](#License)
 
 
+TODO: Mention that this is one of the ways to provide local reasoning:
+Being able to look at the function and know certain things without having to go look at other parts of the program is what we call local reasoning.
+
+
 
 ## Intro
 
-The predominant approach to achieving safe access to [*shared memory*](https://en.wikipedia.org/wiki/Shared_memory) is based on the use of a program object, a [*mutex*](https://en.wikipedia.org/wiki/Mutual_exclusion), which, if used correctly, guarantees that concurrent execution threads will not simultaneously enter a [*critical section*](https://en.wikipedia.org/wiki/Critical_section) of code that operates on the shared memory region. Despite its simplicity, this approach requires a lot of effort from the programmer to use it properly because not only will the compiler not report an error at compile time, but such errors can occur in very mysterious exotic situations when the code is already in production and this brings the trickiness of using mutexes to a critical level. Maintaining mutexes is not only very distracting for the programmer from his application domain, but also quite tedious due to the triviality of the mutex concept itself. To somehow mitigate the problematic situation, the folks developed a simple methodology – associating mutexes with a specific memory location (the [*mutex-to-memory strategy*](https://sergebouts.github.io/swift-shared-memory-manager/#mutex-to-memory-strategy)), the habit of following which greatly alleviates the burden on the programmer. 
+The predominant approach to achieving safe access to [*shared memory*](https://en.wikipedia.org/wiki/Shared_memory) is based on the use of a program object, a [*mutex*](https://en.wikipedia.org/wiki/Mutual_exclusion), which, if used correctly, guarantees that concurrent execution threads will not simultaneously enter a [*critical section*](https://en.wikipedia.org/wiki/Critical_section) of code that operates on the shared memory region. Despite its simplicity, this approach requires a lot of effort from the programmer to use it properly because not only will the compiler not report an error at compile time, but such errors can occur in very mysterious exotic situations when the code is already in production and this brings the trickiness of using mutexes to a critical level. Maintaining mutexes is not only very distracting for the programmer from his application domain, but also quite tedious due to the triviality of the mutex concept itself. To somehow mitigate the problematic situation, the folks developed a simple methodology – associating mutexes with a specific memory location (the [*mutex-to-memory strategy*](https://serhiybutz.github.io/swift-shared-memory-manager/#mutex-to-memory-strategy)), the habit of following which greatly alleviates the burden on the programmer. 
 
 However, it became clear over time that the *mutex-to-memory* strategy is far from a panacea and has a bunch of drawbacks, the main point of which is that this tool itself simply does not get along with the process of logical transformations by the program of its state. More refined memory synchronization patterns and means have been developed and adopted both in the form of program objects that solve their specific domain of synchronization problems, such as readers-writer locks, condition variables, turnstiles etc., and as properties of higher-level program constructs, such as monitors, run loops, dispatch queues, actors etc. These or other constructs give certain guarantees, provided that one follows their semantics and greatly ease the programmer's burden of taking care of such often tedious thing as, for example, strictly maintaining [*critical sections*](https://en.wikipedia.org/wiki/Critical_section) in the code, or [memory ordering](https://en.wikipedia.org/wiki/Memory_ordering).
 
-Another alternative strategy is implemented in *Mitra* – the [*mutex to operation strategy*](https://sergebouts.github.io/swift-shared-memory-manager/#mutex-to-operation-strategy). In this strategy, the association of a particular mutex with a particular memory location is not static, but dynamic – the duration of mutex association corresponds to the duration of a particular *state operation*. As in other approaches, each *state operation* is a *critical section*, but the fundamental difference is that in this approach the *mutex* concept is *explicitly* tied to the *state operation*, and here the delineation of access to a particular memory location depends on whether or not it is used in other *operations* at the moment, and this delineation occurs dynamically. Carrying out of this strategy is a rather tedious process to burden the programmer with it, so the full control of this process is done by *Mitra*'s *Shared Manager*. 
+Another alternative strategy is implemented in *Mitra* – the [*mutex to operation strategy*](https://serhiybutz.github.io/swift-shared-memory-manager/#mutex-to-operation-strategy). In this strategy, the association of a particular mutex with a particular memory location is not static, but dynamic – the duration of mutex association corresponds to the duration of a particular *state operation*. As in other approaches, each *state operation* is a *critical section*, but the fundamental difference is that in this approach the *mutex* concept is *explicitly* tied to the *state operation*, and here the delineation of access to a particular memory location depends on whether or not it is used in other *operations* at the moment, and this delineation occurs dynamically. Carrying out of this strategy is a rather tedious process to burden the programmer with it, so the full control of this process is done by *Mitra*'s *Shared Manager*. 
 
-For more information, see [here](https://sergebouts.github.io/swift-shared-memory-manager/).
+For more information, see [here](https://serhiybutz.github.io/swift-shared-memory-manager/).
 
 
 
@@ -187,7 +191,7 @@ Now you have seen how concise the code for implementing shared memory synchroniz
 1. Go to "File" -> "Swift Packages" -> "Add Package Dependency"
 2. Paste *Mitra* repository URL into the search field:
 
-`https://github.com/SergeBouts/Mitra.git`
+`https://github.com/SerhiyButz/Mitra.git`
 
 3. Click "Next"
 

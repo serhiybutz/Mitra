@@ -2,7 +2,7 @@
 //  BankMock.swift
 //  Mitra
 //
-//  Created by Serge Bouts on 6/23/20.
+//  Created by Serhiy Butz on 6/23/20.
 //  Copyright © 2020 iRiZen.com. All rights reserved.
 //
 

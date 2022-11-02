@@ -2,7 +2,7 @@
 //  Contraption.swift
 //  Mitra
 //
-//  Created by Serge Bouts on 11/16/20.
+//  Created by Serhiy Butz on 11/16/20.
 //  Copyright © 2020 iRiZen.com. All rights reserved.
 //
 

@@ -12,8 +12,8 @@ let package = Package(
             targets: ["Mitra"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/SergeBouts/XConcurrencyKit.git", from: "0.1.0"),
-        .package(url: "https://github.com/SergeBouts/Mutexes.git", from: "0.1.0"),
+        .package(url: "https://github.com/SerhiyButz/XConcurrencyKit.git", from: "0.2.0"),
+        .package(url: "https://github.com/SerhiyButz/Mutexes.git", from: "0.2.0"),
         .package(url: "https://github.com/apple/swift-atomics", from: "1.0.2"),
     ],
     targets: [
